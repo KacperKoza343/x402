@@ -153,9 +153,13 @@ A facilitator verifying an `exact`‑scheme Hedera payment MUST enforce all of t
 
 - The transaction MUST:
   - Not have been previously submitted/observed (implementations SHOULD perform idempotency / replay checks where possible).
-- The facilitator SHOULD simulate or pre‑check the transaction using Hedera APIs where available to ensure:
+- The facilitator MUST verify that the inferred payer account signed the frozen transaction body before sponsoring it. Implementations SHOULD use the payer account's on-chain key (from `AccountInfo`) and the transaction's embedded signature map (for example via `PublicKey.verifyTransaction()` in the Hiero SDK). Unsigned transactions, transactions signed with the wrong key, and transactions missing required threshold/key-list signatures MUST be rejected during `/verify`.
+- The facilitator SHOULD pre-check the transaction using Hedera Mirror Node REST APIs (or equivalent indexers) to ensure:
   - The client has sufficient balance of the `asset` to cover the transfer.
-  - The transaction is expected to succeed on chain (no obvious `INSUFFICIENT_BALANCE`, invalid token association, or similar failures).
+  - For HTS fungible-token payments, the `payTo` account is already associated with `asset` **or** has remaining automatic-association capacity (`max_automatic_token_associations` is `-1`, or the count of existing `automatic_association` relationships is strictly less than the configured limit).
+  - The transaction is expected to succeed on chain (no obvious `INSUFFICIENT_BALANCE`, `TOKEN_NOT_ASSOCIATED_TO_ACCOUNT`, or similar failures).
+
+Consensus-node `AccountInfo` responses no longer reliably include full token-relationship lists; mirror-node queries (for example `GET /api/v1/accounts/{id}/tokens`) are the recommended data source for association and balance pre-checks.
 
 These checks are security‑critical to ensure the fee payer cannot be tricked into transferring their own funds or sponsoring unintended actions. Implementations MAY introduce stricter limits (e.g., additional policy around max fee, max amount, or allowed token lists) but MUST NOT relax the above constraints.
 

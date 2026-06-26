@@ -61,8 +61,8 @@ async function createTransferTransactionBase64(args: {
     tx.addHbarTransfer(AccountId.fromString(args.payTo), Hbar.fromTinybars(amount.toString()));
   } else {
     const tokenId = TokenId.fromString(args.asset);
-    tx.addTokenTransfer(tokenId, AccountId.fromString(args.payer), (-amount).toString());
-    tx.addTokenTransfer(tokenId, AccountId.fromString(args.payTo), amount.toString());
+    tx.addTokenTransfer(tokenId, AccountId.fromString(args.payer), -amount);
+    tx.addTokenTransfer(tokenId, AccountId.fromString(args.payTo), amount);
   }
 
   tx.setTransactionId(TransactionId.generate(AccountId.fromString(args.feePayer)));
@@ -349,8 +349,8 @@ describe("ExactHedera facilitator scheme", () => {
     const tx = new TransferTransaction();
     tx.addHbarTransfer(AccountId.fromString("0.0.9001"), Hbar.fromTinybars("-1000"));
     tx.addHbarTransfer(AccountId.fromString("0.0.7001"), Hbar.fromTinybars("900"));
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.9001"), "-1000");
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7001"), "1000");
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.9001"), -1000);
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7001"), 1000);
     tx.setTransactionId(TransactionId.generate(AccountId.fromString("0.0.5001")));
     await tx.freezeWith(Client.forTestnet());
     const payload: PaymentPayload = {
@@ -369,8 +369,8 @@ describe("ExactHedera facilitator scheme", () => {
     const tx = new TransferTransaction();
     tx.addHbarTransfer(AccountId.fromString("0.0.9001"), Hbar.fromTinybars("-10"));
     tx.addHbarTransfer(AccountId.fromString("0.0.7001"), Hbar.fromTinybars("10"));
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.9001"), "-1000");
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7001"), "1000");
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.9001"), -1000);
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7001"), 1000);
     tx.setTransactionId(TransactionId.generate(AccountId.fromString("0.0.5001")));
     await tx.freezeWith(Client.forTestnet());
     const payload: PaymentPayload = {
@@ -389,8 +389,8 @@ describe("ExactHedera facilitator scheme", () => {
     const tx = new TransferTransaction();
     tx.addHbarTransfer(AccountId.fromString("0.0.5001"), Hbar.fromTinybars("-10"));
     tx.addHbarTransfer(AccountId.fromString("0.0.9001"), Hbar.fromTinybars("10"));
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.9001"), "-1000");
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7001"), "1000");
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.9001"), -1000);
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7001"), 1000);
     tx.setTransactionId(TransactionId.generate(AccountId.fromString("0.0.5001")));
     await tx.freezeWith(Client.forTestnet());
     const payload: PaymentPayload = {
@@ -407,8 +407,8 @@ describe("ExactHedera facilitator scheme", () => {
     const signer = createSigner();
     const scheme = new ExactHederaScheme(signer);
     const tx = new TransferTransaction();
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.9001"), "-1000");
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7001"), "900");
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.9001"), -1000);
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7001"), 900);
     tx.setTransactionId(TransactionId.generate(AccountId.fromString("0.0.5001")));
     await tx.freezeWith(Client.forTestnet());
     const payload: PaymentPayload = {
@@ -425,9 +425,9 @@ describe("ExactHedera facilitator scheme", () => {
     const signer = createSigner();
     const scheme = new ExactHederaScheme(signer);
     const tx = new TransferTransaction();
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.5001"), "-1");
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.9001"), "-999");
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7001"), "1000");
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.5001"), -1);
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.9001"), -999);
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7001"), 1000);
     tx.setTransactionId(TransactionId.generate(AccountId.fromString("0.0.5001")));
     await tx.freezeWith(Client.forTestnet());
     const payload: PaymentPayload = {
@@ -444,9 +444,9 @@ describe("ExactHedera facilitator scheme", () => {
     const signer = createSigner();
     const scheme = new ExactHederaScheme(signer);
     const tx = new TransferTransaction();
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.9001"), "-1000");
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7001"), "999");
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7002"), "1");
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.9001"), -1000);
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7001"), 999);
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7002"), 1);
     tx.setTransactionId(TransactionId.generate(AccountId.fromString("0.0.5001")));
     await tx.freezeWith(Client.forTestnet());
     const payload: PaymentPayload = {
@@ -463,9 +463,9 @@ describe("ExactHedera facilitator scheme", () => {
     const signer = createSigner();
     const scheme = new ExactHederaScheme(signer);
     const tx = new TransferTransaction();
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.9001"), "-1001");
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7001"), "1000");
-    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7002"), "1");
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.9001"), -1001);
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7001"), 1000);
+    tx.addTokenTransfer(TokenId.fromString("0.0.6001"), AccountId.fromString("0.0.7002"), 1);
     tx.setTransactionId(TransactionId.generate(AccountId.fromString("0.0.5001")));
     await tx.freezeWith(Client.forTestnet());
     const payload: PaymentPayload = {
@@ -544,6 +544,40 @@ describe("ExactHedera facilitator scheme", () => {
     const scheme = new ExactHederaScheme(signer);
     const extra = scheme.getExtra("hedera:testnet");
     expect(extra).toBeUndefined();
+  });
+
+  describe("verifyPayerSignature hook", () => {
+    async function buildValidPayload(): Promise<PaymentPayload> {
+      return {
+        ...basePayload,
+        payload: {
+          transaction: await createTransferTransactionBase64({
+            feePayer: "0.0.5001",
+            payer: "0.0.9001",
+            payTo: "0.0.7001",
+            asset: "0.0.6001",
+            amount: "1000",
+          }),
+        },
+      };
+    }
+
+    it("fails verify when hook returns ok:false", async () => {
+      const signer = {
+        ...createSigner(),
+        verifyPayerSignature: vi.fn(async () => ({
+          ok: false,
+          reason: "payer_signature_invalid",
+          message: "account 0.0.9001 did not sign the transaction",
+        })),
+      };
+      const scheme = new ExactHederaScheme(signer);
+      const result = await scheme.verify(await buildValidPayload(), baseRequirements);
+      expect(result.isValid).toBe(false);
+      expect(result.invalidReason).toBe("invalid_exact_hedera_payload_signature_invalid");
+      expect(result.invalidMessage).toContain("payer_signature_invalid");
+      expect(result.payer).toBe("0.0.9001");
+    });
   });
 
   describe("preflightTransfer hook", () => {

@@ -21,6 +21,7 @@ import {
   createHederaClient,
   createHederaPreflightTransfer,
   createHederaSignAndSubmitTransaction,
+  createHederaVerifyPayerSignature,
   toFacilitatorHederaSigner,
 } from "@x402/hedera";
 import { ExactHederaScheme } from "@x402/hedera/exact/facilitator";
@@ -222,7 +223,8 @@ async function createFacilitator(): Promise<x402Facilitator> {
         buildHederaClient,
         hederaFeePayerKey,
       ),
-      preflightTransfer: createHederaPreflightTransfer(buildHederaClient),
+      preflightTransfer: createHederaPreflightTransfer(),
+      verifyPayerSignature: createHederaVerifyPayerSignature(buildHederaClient),
     });
 
     facilitator.register(

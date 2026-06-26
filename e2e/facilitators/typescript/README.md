@@ -176,7 +176,8 @@ pnpm start
 - `EVM_NETWORK` - EVM network (default: eip155:84532)
 - `SVM_NETWORK` - SVM network (default: solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1)
 - `HEDERA_NETWORK` - Hedera network (default: hedera:testnet)
-- `HEDERA_NODE_URL` - Optional custom Hedera node URL
+- `HEDERA_NODE_URL` - Optional custom Hedera consensus node URL (used for submission)
+- `HEDERA_MIRROR_NODE_URL` - Optional custom Hedera mirror node base URL for preflight balance/association checks. Set this alongside `HEDERA_NODE_URL` so preflight queries the same ledger view as submission.
 - `STELLAR_NETWORK` - Stellar network (default: stellar:testnet)
 
 ## Package Dependencies

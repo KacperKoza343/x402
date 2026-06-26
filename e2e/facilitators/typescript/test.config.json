@@ -52,6 +52,7 @@
       "APTOS_NETWORK",
       "HEDERA_NETWORK",
       "HEDERA_NODE_URL",
+      "HEDERA_MIRROR_NODE_URL",
       "STELLAR_NETWORK",
       "TVM_NETWORK",
       "TVM_PROVIDER",

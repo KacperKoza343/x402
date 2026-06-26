@@ -137,6 +137,14 @@ export class ExactHederaScheme implements SchemeNetworkFacilitator {
       inspected.hbarTransfers,
       requirements,
     ) as HederaTransferEntry[];
+    const debitedPayers = payerTransfers.filter(entry => BigInt(entry.amount) < 0n);
+    if (debitedPayers.length !== 1) {
+      return {
+        isValid: false,
+        invalidReason: "invalid_exact_hedera_payload_multiple_payers",
+        payer: "",
+      };
+    }
     const payer = this.inferPayer(payerTransfers);
 
     // Phase 4: alias policy check
@@ -145,7 +153,38 @@ export class ExactHederaScheme implements SchemeNetworkFacilitator {
       return payToValidation;
     }
 
-    // Phase 5: optional onchain preflight (balance + token association).
+    // Phase 5: payer signature verification (fail-closed).
+    if (typeof this.signer.verifyPayerSignature === "function") {
+      let signatureCheck: { ok: boolean; reason?: string; message?: string };
+      try {
+        signatureCheck = await this.signer.verifyPayerSignature({
+          transaction: transactionBase64,
+          payer,
+          network: requirements.network,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          isValid: false,
+          invalidReason: "invalid_exact_hedera_payload_signature_invalid",
+          invalidMessage: message,
+          payer,
+        };
+      }
+      if (!signatureCheck.ok) {
+        const invalidMessage = signatureCheck.reason
+          ? `${signatureCheck.reason}${signatureCheck.message ? `: ${signatureCheck.message}` : ""}`
+          : signatureCheck.message;
+        return {
+          isValid: false,
+          invalidReason: "invalid_exact_hedera_payload_signature_invalid",
+          invalidMessage,
+          payer,
+        };
+      }
+    }
+
+    // Phase 6: optional onchain preflight (balance + token association).
     // Spec §6 — advisory, never throws out of verify.
     // Precondition: Phase 3 transfer-semantics guarantees `payer` is non-empty
     // (the payload must contain at least one debited account for `asset`).
