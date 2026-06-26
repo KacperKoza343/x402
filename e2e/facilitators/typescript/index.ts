@@ -49,6 +49,7 @@ import {
   createHederaClient,
   createHederaPreflightTransfer,
   createHederaSignAndSubmitTransaction,
+  createHederaVerifyPayerSignature,
   toFacilitatorHederaSigner,
 } from "@x402/hedera";
 import { ExactHederaScheme } from "@x402/hedera/exact/facilitator";
@@ -109,6 +110,7 @@ const SVM_RPC_URL = process.env.SVM_RPC_URL;
 const AVM_RPC_URL = process.env.AVM_RPC_URL;
 const APTOS_RPC_URL = process.env.APTOS_RPC_URL;
 const HEDERA_NODE_URL = process.env.HEDERA_NODE_URL;
+const HEDERA_MIRROR_NODE_URL = process.env.HEDERA_MIRROR_NODE_URL;
 const STELLAR_RPC_URL = process.env.STELLAR_RPC_URL;
 const TVM_PROVIDER = (process.env.TVM_PROVIDER || TVM_PROVIDER_TONCENTER).toLowerCase();
 
@@ -136,6 +138,7 @@ if (SVM_RPC_URL) console.log(`🌐 SVM RPC URL: ${SVM_RPC_URL}`);
 if (AVM_RPC_URL) console.log(`🌐 AVM RPC URL: ${AVM_RPC_URL}`);
 if (APTOS_RPC_URL) console.log(`🌐 Aptos RPC URL: ${APTOS_RPC_URL}`);
 if (HEDERA_NODE_URL) console.log(`🌐 Hedera Node URL: ${HEDERA_NODE_URL}`);
+if (HEDERA_MIRROR_NODE_URL) console.log(`🌐 Hedera Mirror Node URL: ${HEDERA_MIRROR_NODE_URL}`);
 if (STELLAR_RPC_URL) console.log(`🌐 Stellar RPC URL: ${STELLAR_RPC_URL}`);
 console.log(`🌐 TVM Provider: ${TVM_PROVIDER}`);
 
@@ -213,13 +216,22 @@ if (process.env.HEDERA_ACCOUNT_ID && process.env.HEDERA_PRIVATE_KEY) {
     return client;
   };
 
+  if (HEDERA_NODE_URL && !HEDERA_MIRROR_NODE_URL) {
+    console.warn(
+      "⚠️ HEDERA_NODE_URL is set but HEDERA_MIRROR_NODE_URL is not; preflight will query the default public mirror node, which may reflect a different ledger than the configured node.",
+    );
+  }
+
   hederaSigner = toFacilitatorHederaSigner({
     getAddresses: () => [hederaAccountId],
     signAndSubmitTransaction: createHederaSignAndSubmitTransaction(
       buildHederaClient,
       hederaKey,
     ),
-    preflightTransfer: createHederaPreflightTransfer(buildHederaClient),
+    preflightTransfer: createHederaPreflightTransfer(
+      HEDERA_MIRROR_NODE_URL ? { mirrorNodeUrl: HEDERA_MIRROR_NODE_URL } : {},
+    ),
+    verifyPayerSignature: createHederaVerifyPayerSignature(buildHederaClient),
   });
   console.info(`Hedera Facilitator account: ${hederaAccountId}`);
 }

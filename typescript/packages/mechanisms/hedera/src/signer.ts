@@ -1,9 +1,13 @@
 import type { PaymentRequirements } from "@x402/core/types";
 import {
   AccountId,
+  AccountInfoQuery,
   Client,
   Hbar,
+  Key,
+  KeyList,
   PrivateKey,
+  PublicKey,
   TokenId,
   Transaction,
   TransactionId,
@@ -106,6 +110,22 @@ export type FacilitatorHederaSigner = {
     amount: string;
     network: string;
   }): Promise<{ ok: boolean; reason?: string; message?: string }>;
+
+  /**
+   * Optional payer-signature verification hook. The scheme treats a missing
+   * signature, wrong key, or hook failure as invalid before settlement.
+   *
+   * @param params - Signature verification parameters
+   * @param params.transaction - Base64-encoded partially signed transaction
+   * @param params.payer - Payer account id inferred from transfer debits
+   * @param params.network - CAIP-2 network identifier
+   * @returns `{ ok: true }` when the payer key signed the frozen transaction body
+   */
+  verifyPayerSignature?(params: {
+    transaction: string;
+    payer: string;
+    network: string;
+  }): Promise<{ ok: boolean; reason?: string; message?: string }>;
 };
 
 /**
@@ -189,6 +209,68 @@ export function createClientHederaSigner(
         client.close();
       }
     },
+  };
+}
+
+/**
+ * Returns true when `accountKey` (single, threshold, or nested key list) signed `tx`.
+ *
+ * @param accountKey - On-chain account key from AccountInfo
+ * @param tx - Decoded Hedera transaction
+ * @returns Whether the key requirements are satisfied by present signatures
+ */
+export function verifyAccountKeySignedTransaction(accountKey: Key, tx: Transaction): boolean {
+  if (accountKey instanceof PublicKey) {
+    return accountKey.verifyTransaction(tx);
+  }
+  if (accountKey instanceof KeyList) {
+    const memberKeys = accountKey.toArray();
+    const threshold = accountKey.threshold;
+    if (threshold != null) {
+      let verifiedCount = 0;
+      for (const memberKey of memberKeys) {
+        if (verifyAccountKeySignedTransaction(memberKey, tx)) {
+          verifiedCount += 1;
+        }
+      }
+      return verifiedCount >= threshold;
+    }
+    return memberKeys.every(memberKey => verifyAccountKeySignedTransaction(memberKey, tx));
+  }
+  return false;
+}
+
+/**
+ * Builds a `verifyPayerSignature` implementation backed by the Hiero SDK.
+ *
+ * Loads the payer account key via `AccountInfoQuery` and verifies the frozen
+ * transaction body was signed by that key (including threshold / key-list keys).
+ *
+ * @param buildClient - Factory that produces an SDK client for a given CAIP-2 network
+ * @returns An implementation suitable for `FacilitatorHederaSigner.verifyPayerSignature`
+ */
+export function createHederaVerifyPayerSignature(
+  buildClient: (network: string) => Client,
+): NonNullable<FacilitatorHederaSigner["verifyPayerSignature"]> {
+  return async ({ transaction, payer, network }) => {
+    const client = buildClient(network);
+    try {
+      const tx = Transaction.fromBytes(Buffer.from(transaction, "base64"));
+      const accountInfo = await new AccountInfoQuery()
+        .setAccountId(AccountId.fromString(payer))
+        .execute(client);
+      const signed = verifyAccountKeySignedTransaction(accountInfo.key, tx);
+      if (!signed) {
+        return {
+          ok: false,
+          reason: "payer_signature_invalid",
+          message: `account ${payer} did not sign the transaction`,
+        };
+      }
+      return { ok: true };
+    } finally {
+      client.close();
+    }
   };
 }
 

@@ -21,6 +21,7 @@ import {
   type FacilitatorHederaSigner,
   createClientHederaSigner,
   createHederaSignAndSubmitTransaction,
+  createHederaVerifyPayerSignature,
 } from "../../src/signer";
 import { createHederaPreflightTransfer } from "../../src/preflight";
 import { ExactHederaScheme as ExactHederaClient } from "../../src/exact/client/scheme";
@@ -116,7 +117,8 @@ describe("Hedera integration", () => {
         feePayerPrivateKey,
       ),
       resolveAccount: async () => ({ exists: true, isAlias: false }),
-      preflightTransfer: createHederaPreflightTransfer(buildClient),
+      preflightTransfer: createHederaPreflightTransfer(),
+      verifyPayerSignature: createHederaVerifyPayerSignature(buildClient),
     };
   }
 
@@ -297,7 +299,6 @@ describe("Hedera integration", () => {
       const settlementResult = await httpServer.processSettlement(
         verifiedPaymentPayload,
         verifiedPaymentRequirements,
-        200,
       );
       expect(settlementResult.success).toBe(true);
       if (settlementResult.success) {
